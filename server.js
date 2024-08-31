@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== "production") {
   const bodyParser = require("body-parser");
   
   const app = express();
-  const port = 3000;
+  const PORT = process.env.PORT || 3000;
   
   // Middleware
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -89,6 +89,6 @@ if (process.env.NODE_ENV !== "production") {
   app.use("/", my_routes);
   
   app.listen(port, () => {
-    console.log(`Server is listening at http://localhost:${port}`);
+    console.log(`Server is listening at http://localhost:${PORT}`);
   });
   
