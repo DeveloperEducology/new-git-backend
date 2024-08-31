@@ -88,7 +88,7 @@ if (process.env.NODE_ENV !== "production") {
   
   app.use("/", my_routes);
   
-  app.listen(port, () => {
+  app.listen(PORT, () => {
     console.log(`Server is listening at http://localhost:${PORT}`);
   });
   
