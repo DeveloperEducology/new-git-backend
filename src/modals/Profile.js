@@ -111,7 +111,8 @@ const ProfileSchema = new mongoose.Schema({
     relation: String,
     address: String,
   },
-  address: AddressSchema, // Adding address schema
+  address: AddressSchema, // Adding address schema 
+  profileImage: String,
   media: [mediaSchema],
   rating: {
     rating: Number,

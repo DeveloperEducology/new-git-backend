@@ -156,16 +156,31 @@ const getAllBookings = async (req, res) => {
 
 const getBookings = async (req, res) => {
   try {
-    const userId = req.params.id; // Assuming userId is stored in req.userId from authentication middleware
+    // Get the page number, pageSize, city, and location from the query parameters
+    const { page = 1, pageSize = 5, city, location } = req.query;
+    const skip = (page - 1) * pageSize;
 
-    // Fetch all bookings for the authenticated user
-    const bookings = await BookingModel.find()
+    // Build the filter object based on the city and location
+    const filter = {};
+    if (city) {
+      filter.city = city;
+    }
+
+    console.log(city);
+    // Fetch bookings with pagination, filtering, and sorting by the latest date
+    const bookings = await BookingModel.find(filter)
       .populate("city")
       .populate("location")
       .populate("category")
       .populate("course")
       .populate("subjects")
-      .populate("days");
+      .populate("days")
+      .skip(skip)
+      .sort({ createdAt: -1 }) // Sorting by the latest date
+      .limit(parseInt(pageSize));
+
+    // Get the total count of bookings for pagination purposes
+    const totalBookings = await BookingModel.countDocuments(filter);
 
     if (!bookings || bookings.length === 0) {
       return res
@@ -173,7 +188,15 @@ const getBookings = async (req, res) => {
         .json({ message: "No bookings found for this user" });
     }
 
-    res.status(200).json({ bookings });
+    // Calculate total pages
+    const totalPages = Math.ceil(totalBookings / pageSize);
+
+    res.status(200).json({
+      bookings,
+      currentPage: parseInt(page),
+      totalPages,
+      totalBookings,
+    });
   } catch (error) {
     console.error("Error fetching all bookings:", error);
     res.status(500).json({ message: "Error fetching bookings", error });
@@ -282,6 +305,35 @@ const filterBookings = async (req, res) => {
   }
 };
 
+const searchBooking = async (req, res) => {
+  const { q, part, maxResults } = req.query;
+
+  try {
+    if (!q) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    // Perform the search in the Booking collection
+    const bookings = await BookingModel.find({
+      $or: [
+        { tuitionType: new RegExp(q, "i") },
+        { studentGender: new RegExp(q, "i") },
+        { tutorGender: new RegExp(q, "i") },
+        // Add other searchable fields here...
+      ],
+    }).limit(parseInt(maxResults) || 10);
+
+    res.json({
+      count: bookings.length,
+      items: bookings,
+      part,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   create,
   getBooking,
@@ -293,4 +345,5 @@ module.exports = {
   updateBooking,
   deleteBooking,
   filterBookings,
+  searchBooking,
 };

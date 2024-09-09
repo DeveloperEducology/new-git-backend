@@ -3,13 +3,34 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
-
-
 const clientId = "LRDFECK0815DHLLSN7KLJ7NU18YCOYMG";
 const clientSecret = "mssp9lfiqnj2rtm4jfx331csaeoynmm4";
 let storedOtp = null;
 let orderId = null;
 let phoneNumber = null;
+
+const fileUpload = async (req, res) => {
+  if (!req?.file) {
+    res.status(403).json({ status: false, error: "please upload a file" });
+    return;
+  }
+  let data = {};
+  if (!!req?.file) {
+    data = {
+      url: req.file.location,
+      type: req.file.mimetype,
+    };
+  }
+  try {
+    res.send({
+      data: data,
+    });
+
+    console.log("fileupload in user api", data);
+  } catch (error) {
+    res.status(403).json({ status: false, error: error });
+  }
+};
 
 const createUser = async (req, res) => {
   const {
@@ -64,7 +85,9 @@ const loginUser = async (req, res) => {
   console.log("req.body", req.body);
 
   try {
-    const user = await UserModel.findOne({ email: email });
+    const user = await UserModel.findOne({ email: email })
+      .populate("city")
+      .populate("location");
     if (user) {
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
@@ -212,7 +235,7 @@ const verifyOTP = async (req, res) => {
       const token = jwt.sign(
         { user_id: user._id, phoneNumber: user.phoneNumber },
         process.env.TOKEN_KEY,
-        { expiresIn: "2h" }
+        { expiresIn: "2w" }
       );
 
       const userWithoutSensitiveInfo = {
@@ -241,11 +264,60 @@ const verifyOTP = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  const userId = req.params.userId; // Assuming you're using userId as a parameter in the route
+  const { email, userName, city, location, profileImage } = req.body;
+
+  try {
+    // Find the user by ID
+    let user = await UserModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    // Update the fields
+    if (email) user.email = email;
+    if (userName) user.userName = userName;
+    if (city) user.city = city;
+    if (location) user.location = location;
+    if (profileImage) user.profileImage = profileImage; // Update the profile picture
+
+    // Save the updated user to the database
+    await user.save();
+
+    // Return the updated user data, excluding the password
+    const userWithoutSensitiveInfo = {
+      ...user.toObject(),
+    };
+    delete userWithoutSensitiveInfo.password;
+
+    res.json({
+      status: true,
+      message: "User profile updated successfully",
+      data: userWithoutSensitiveInfo,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ status: false, error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
-  // fileUpload,
   createUser,
   loginUser,
   loginWithPhone,
   sendOTP,
   verifyOTP,
+  updateUser,
+};
+
+module.exports = {
+  fileUpload,
+  createUser,
+  loginUser,
+  loginWithPhone,
+  sendOTP,
+  verifyOTP,
+  updateUser,
 };

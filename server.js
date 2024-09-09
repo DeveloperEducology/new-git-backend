@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== "production") {
   const bodyParser = require("body-parser");
   
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const port = 3000;
   
   // Middleware
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,6 +31,7 @@ if (process.env.NODE_ENV !== "production") {
   app.get("/", (req, res) => {
     res.send("Hello, Express");
   });
+  
   
   app.get("/collections", async (req, res) => {
     try {
@@ -88,7 +89,7 @@ if (process.env.NODE_ENV !== "production") {
   
   app.use("/", my_routes);
   
-  app.listen(PORT, () => {
-    console.log(`Server is listening at http://localhost:${PORT}`);
+  app.listen(port, () => {
+    console.log(`Server is listening at http://localhost:${port}`);
   });
   

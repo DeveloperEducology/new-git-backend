@@ -25,6 +25,7 @@ const BookingSchema = new mongoose.Schema({
   salary: { type: String, required: true },
   otherRequirement: { type: String },
 
+
   // New postedDate field
   postedDate: {
     type: Date,

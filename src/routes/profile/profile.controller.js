@@ -350,6 +350,8 @@ const profileCategories = async (req, res) => {
         path: "userId",
         select: "userName email", // Select specific fields from the userId object
       })
+      .populate("otherInfo.preferredCategories")
+      .populate("otherInfo.preferredSubjects")
       .populate("otherInfo.preferredClasses")
       .populate("otherInfo.location"); // Populate location if needed
 
